@@ -156,6 +156,18 @@
 
 #define PR_GET_TID_ADDRESS	40
 
+#define PR_SET_THP_DISABLE	41
+#define PR_GET_THP_DISABLE	42
+
+/* Sets the timerslack for arbitrary threads
+ * arg2 slack value, 0 means "use default"
+ * arg3 pid of the thread whose timer slack needs to be set
+ */
+#define PR_SET_TIMERSLACK_PID 43
+
+#define PR_SET_VMA              0x53564d41
+# define PR_SET_VMA_ANON_NAME           0
+
 /* Control the ambient capability set */
 #define PR_CAP_AMBIENT			47
 # define PR_CAP_AMBIENT_IS_SET		1
