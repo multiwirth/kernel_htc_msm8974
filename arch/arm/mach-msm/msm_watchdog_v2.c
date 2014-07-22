@@ -28,6 +28,31 @@
 #include <mach/scm.h>
 #include <mach/msm_memory_dump.h>
 
+#ifdef CONFIG_ARCH_MSM8226
+extern bool htc_pvs_adjust;
+extern u32  htc_pvs_adjust_seconds;
+
+uint32_t mpm_get_timetick(void)
+{
+	volatile uint32_t i = 0;
+	volatile uint32_t tick;
+	volatile uint32_t tick_count;
+
+	tick = __raw_readl(MPM_SLEEP_CLK_BASE);
+	for (i; i < 3; i++)
+	{
+	  tick_count = __raw_readl(MPM_SLEEP_CLK_BASE);
+	  if (tick != tick_count)
+	  {
+		i = 0;
+		tick = __raw_readl(MPM_SLEEP_CLK_BASE);
+	  }
+	}
+	mb();
+	return tick;
+}
+#endif
+
 #define MODULE_NAME "msm_watchdog"
 #define WDT0_ACCSCSSNBARK_INT 0
 #define TCSR_WDT_CFG	0x30
@@ -73,6 +98,19 @@ struct msm_watchdog_data {
  */
 static int enable = 1;
 module_param(enable, int, 0);
+
+#ifdef CONFIG_ARCH_MSM8226
+void msm_watchdog_reset(void)
+{
+	pr_info("%s: triggering MSM Apps Watchdog bark...\n", __func__);
+
+	__raw_writel(1, msm_wdt_base + WDT0_RST);
+	__raw_writel(0x31F3, msm_wdt_base + WDT0_BARK_TIME);
+	__raw_writel(5*0x31F3, msm_wdt_base + WDT0_BITE_TIME);
+	__raw_writel(1, msm_wdt_base + WDT0_EN);
+}
+EXPORT_SYMBOL(msm_watchdog_reset);
+#endif
 
 /*
  * On the kernel command line specify
@@ -310,6 +348,14 @@ static void pet_watchdog_work(struct work_struct *work)
 	if (enable)
 		queue_delayed_work_on(0, wdog_wq,
 				&wdog_dd->dogwork_struct, delay_time);
+
+#ifdef CONFIG_HTC_DEBUG_FOOTPRINT
+#ifdef CONFIG_ARCH_MSM8226
+	if ((mpm_get_timetick() > (htc_pvs_adjust_seconds*WDT_HZ)) && htc_pvs_adjust) {
+		htc_pvs_adjust = false;
+	}
+#endif
+#endif
 }
 
 static int msm_watchdog_remove(struct platform_device *pdev)

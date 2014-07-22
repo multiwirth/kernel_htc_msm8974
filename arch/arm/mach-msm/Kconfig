@@ -3289,3 +3289,8 @@ config MACH_MEC_WHL
         bool "MSM8974 MEC_WHL"
         help
           Support for HTC MSM8974 MEC_WHL
+
+config HTC_DEBUG_RBCPR_8226
+    depends on ARCH_MSM8226
+    default n
+    bool "HTC RBCPR debug"
