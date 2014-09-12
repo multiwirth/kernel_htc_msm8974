@@ -450,6 +450,7 @@ obj-$(CONFIG_MACH_MEC_DWG) += board-mec-gpiomux.o
 obj-$(CONFIG_MACH_MEC_DUG) += board-mec-gpiomux.o
 obj-$(CONFIG_MACH_MEC_TL) += board-mec-gpiomux.o
 obj-$(CONFIG_MACH_MEC_WHL) += board-mec-gpiomux.o
+obj-$(CONFIG_MACH_A5) += board-a5-gpiomux.o board-afe-audio-amp.o
 
 obj-y += smlog.o
 

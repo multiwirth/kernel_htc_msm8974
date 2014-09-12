@@ -3290,6 +3290,12 @@ config MACH_MEC_WHL
         help
           Support for HTC MSM8974 MEC_WHL
 
+config MACH_A5
+        depends on ARCH_MSM8226
+        bool "MSM8226 A5"
+        help
+          Support for HTC MSM8226 A5
+
 config HTC_DEBUG_RBCPR_8226
     depends on ARCH_MSM8226
     default n

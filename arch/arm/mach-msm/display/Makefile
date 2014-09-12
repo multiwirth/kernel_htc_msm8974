@@ -9,3 +9,4 @@ obj-$(CONFIG_MACH_MEC_DWG) += htc_mec-panel.o
 obj-$(CONFIG_MACH_MEC_DUG) += htc_mec-panel.o
 obj-$(CONFIG_MACH_MEC_TL) += htc_mec-panel.o
 obj-$(CONFIG_MACH_MEC_WHL) += htc_mec-panel.o
+obj-$(CONFIG_MACH_A5) += htc_a5-panel.o
