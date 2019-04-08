@@ -445,6 +445,11 @@ obj-$(CONFIG_MACH_M8_DUG) += board-m8-gpiomux.o
 obj-$(CONFIG_MACH_M8_WHL) += board-m8-gpiomux.o
 obj-$(CONFIG_MACH_M8_WL) += board-m8-gpiomux.o
 obj-$(CONFIG_MACH_MELS_TUHL) += board-mels-gpiomux.o
+obj-$(CONFIG_MACH_MEC_UL) += board-mec-gpiomux.o
+obj-$(CONFIG_MACH_MEC_DWG) += board-mec-gpiomux.o
+obj-$(CONFIG_MACH_MEC_DUG) += board-mec-gpiomux.o
+obj-$(CONFIG_MACH_MEC_TL) += board-mec-gpiomux.o
+obj-$(CONFIG_MACH_MEC_WHL) += board-mec-gpiomux.o
 
 obj-y += smlog.o
 
