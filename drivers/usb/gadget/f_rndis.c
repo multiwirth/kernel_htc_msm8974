@@ -714,6 +714,7 @@ static void rndis_disable(struct usb_function *f)
 
 	usb_ep_disable(rndis->notify);
 	rndis->notify->driver_data = NULL;
+	rndis->notify->desc = NULL;
 	bam_adaptive_timer_enabled = 1;
 	POLLING_MIN_SLEEP = 2950;
 	POLLING_MAX_SLEEP = 3050;
