@@ -164,25 +164,25 @@ static int32_t msm_led_trigger_probe(struct platform_device *pdev)
 
 			rc = of_property_read_string(flash_src_node,
 				"linux,default-trigger",
-				&fctrl.led_trigger_name[i]);
+				&fctrl.flash_trigger_name[i]);
 			if (rc < 0) {
 				pr_err("default-trigger: read failed\n");
 				of_node_put(flash_src_node);
 				continue;
 			}
 
-			pr_info("default trigger %s\n", fctrl.led_trigger_name[i]);
+			pr_info("default trigger %s\n", fctrl.flash_trigger_name[i]);
 
 			if (flashtype == GPIO_FLASH) {
 				
-				fctrl.op_current[i] = LED_FULL;
+				fctrl.flash_op_current[i] = LED_FULL;
 			} else {
 				rc = of_property_read_u32(flash_src_node,
 					"qcom,current",
-					&fctrl.op_current[i]);
+					&fctrl.flash_op_current[i]);
 				rc_1 = of_property_read_u32(flash_src_node,
 					"qcom,max-current",
-					&fctrl.max_current[i]);
+					&fctrl.flash_max_current[i]);
 				if ((rc < 0) || (rc_1 < 0)) {
 					pr_err("current: read failed\n");
 					of_node_put(flash_src_node);
@@ -192,14 +192,14 @@ static int32_t msm_led_trigger_probe(struct platform_device *pdev)
 
 			of_node_put(flash_src_node);
 
-			pr_info("[CAM][FL] max_current[%d] %d\n", i, fctrl.op_current[i]);
+			pr_info("[CAM][FL] max_current[%d] %d\n", i, fctrl.flash_op_current[i]);
 
-			led_trigger_register_simple(fctrl.led_trigger_name[i],
-				&fctrl.led_trigger[i]);
+			led_trigger_register_simple(fctrl.flash_trigger_name[i],
+				&fctrl.flash_trigger[i]);
 
 			if (flashtype == GPIO_FLASH)
-				if (fctrl.led_trigger[i])
-					temp = fctrl.led_trigger[i];
+				if (fctrl.flash_trigger[i])
+					temp = fctrl.flash_trigger[i];
 		}
 
 		
