@@ -194,7 +194,9 @@ static u32 *ipv4_cow_metrics(struct dst_entry *dst, unsigned long old)
 	return p;
 }
 
-static struct neighbour *ipv4_neigh_lookup(const struct dst_entry *dst, const void *daddr);
+static struct neighbour *ipv4_neigh_lookup(const struct dst_entry *dst,
+					   struct sk_buff *skb,
+					   const void *daddr);
 
 static struct dst_ops ipv4_dst_ops = {
 	.family =		AF_INET,
@@ -1138,7 +1140,9 @@ static int slow_chain_length(const struct rtable *head)
 	return length >> FRACT_BITS;
 }
 
-static struct neighbour *ipv4_neigh_lookup(const struct dst_entry *dst, const void *daddr)
+static struct neighbour *ipv4_neigh_lookup(const struct dst_entry *dst,
+					   struct sk_buff *skb,
+					   const void *daddr)
 {
 	static const __be32 inaddr_any = 0;
 	struct net_device *dev = dst->dev;
@@ -1152,6 +1156,8 @@ static struct neighbour *ipv4_neigh_lookup(const struct dst_entry *dst, const vo
 		pkey = &inaddr_any;
 	else if (rt->rt_gateway)
 		pkey = (const __be32 *) &rt->rt_gateway;
+	else if (skb)
+		pkey = &ip_hdr(skb)->daddr;
 
 	n = __ipv4_neigh_lookup(dev, *(__force u32 *)pkey);
 	if (n)
@@ -1161,7 +1167,7 @@ static struct neighbour *ipv4_neigh_lookup(const struct dst_entry *dst, const vo
 
 static int rt_bind_neighbour(struct rtable *rt)
 {
-	struct neighbour *n = ipv4_neigh_lookup(&rt->dst, &rt->rt_gateway);
+	struct neighbour *n = ipv4_neigh_lookup(&rt->dst, NULL, &rt->rt_gateway);
 	if (IS_ERR(n))
 		return PTR_ERR(n);
 	dst_set_neighbour(&rt->dst, n);
@@ -1448,7 +1454,7 @@ static void check_peer_redir(struct dst_entry *dst, struct inet_peer *peer)
 
 	rt->rt_gateway = peer->redirect_learned.a4;
 
-	n = ipv4_neigh_lookup(&rt->dst, &rt->rt_gateway);
+	n = ipv4_neigh_lookup(&rt->dst, NULL, &rt->rt_gateway);
 	if (IS_ERR(n)) {
 		rt->rt_gateway = orig_gw;
 		return;
@@ -2039,7 +2045,7 @@ static void rt_set_nexthop(struct rtable *rt, const struct flowi4 *fl4,
 static struct rtable *rt_dst_alloc(struct net_device *dev,
 				   bool nopolicy, bool noxfrm)
 {
-	return dst_alloc(&ipv4_dst_ops, dev, 1, -1,
+	return dst_alloc(&ipv4_dst_ops, dev, 1, DST_OBSOLETE_FORCE_CHK,
 			 DST_HOST |
 			 (nopolicy ? DST_NOPOLICY : 0) |
 			 (noxfrm ? DST_NOXFRM : 0));
@@ -2924,9 +2930,10 @@ static struct dst_ops ipv4_dst_blackhole_ops = {
 
 struct dst_entry *ipv4_blackhole_route(struct net *net, struct dst_entry *dst_orig)
 {
-	struct rtable *rt = dst_alloc(&ipv4_dst_blackhole_ops, NULL, 1, 0, 0);
 	struct rtable *ort = (struct rtable *) dst_orig;
+	struct rtable *rt;
 
+	rt = dst_alloc(&ipv4_dst_blackhole_ops, NULL, 1, DST_OBSOLETE_NONE, 0);
 	if (rt) {
 		struct dst_entry *new = &rt->dst;
 

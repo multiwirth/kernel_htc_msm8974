@@ -11,6 +11,8 @@
  *
  */
 #include "msm_sensor.h"
+#include "file_operation.h"
+
 #define imx214_SENSOR_NAME "imx214"
 #define DUAL_CAL_OTP_SIZE 1024
 static uint8_t otp[18];
@@ -186,16 +188,15 @@ int32_t imx214_read_otp_memory(uint8_t *otpPtr, struct sensorb_cfg_data *cdata, 
 	int page = 0, i = 0, j = 0;
 	short OTP_addr = 0x0A04;
 
-	
-	for (page = 0; page < 16; page++)
-	{
-        rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_write(s_ctrl->sensor_i2c_client, 0x0A02, page, MSM_CAMERA_I2C_BYTE_DATA);
-        if (rc < 0)
-            pr_info("%s: i2c_write w 0x0A02 fail\n", __func__);
 
-        rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_write(s_ctrl->sensor_i2c_client, 0x0A00, 0x01, MSM_CAMERA_I2C_BYTE_DATA);
-        if (rc < 0)
-            pr_info("%s: i2c_write w 0x0A00 fail\n", __func__);
+	for (page = 0; page < 16; page++) {
+		rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_write(s_ctrl->sensor_i2c_client, 0x0A02, page, MSM_CAMERA_I2C_BYTE_DATA);
+		if (rc < 0)
+			pr_info("%s: i2c_write w 0x0A02 fail\n", __func__);
+
+		rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_write(s_ctrl->sensor_i2c_client, 0x0A00, 0x01, MSM_CAMERA_I2C_BYTE_DATA);
+		if (rc < 0)
+			pr_info("%s: i2c_write w 0x0A00 fail\n", __func__);
 
 		for (i = 0; i < 64; i++) {
 			rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_read(
@@ -220,155 +221,140 @@ int32_t imx214_read_otp_memory(uint8_t *otpPtr, struct sensorb_cfg_data *cdata, 
 static int imx214_read_fuseid(struct sensorb_cfg_data *cdata,
 	struct msm_sensor_ctrl_t *s_ctrl)
 {
-    int32_t rc = 0;
-    int32_t i = 0, j = 0;
-    uint16_t read_data = 0;
-    static int first= true;
-    int valid_layer = -1;
-    
-    static int read_otp = true;
-    uint8_t *path= "/data/OTPData.dat";
-    struct file* f;
-    
+	int32_t rc = 0;
+	int32_t i = 0, j = 0;
+	uint16_t read_data = 0;
+	static int first= true;
+	int valid_layer = -1;
 
-    if (first)
-    {
-        first = false;
-        for(j = 2; j >= 0; j--)
-        {
-            rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_write(s_ctrl->sensor_i2c_client, 0x0A02, j, MSM_CAMERA_I2C_BYTE_DATA);
-            if (rc < 0)
-                pr_info("[OTP]%s: i2c_write w 0x0A02 fail\n", __func__);
-
-            rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_write(s_ctrl->sensor_i2c_client, 0x0A00, 0x01, MSM_CAMERA_I2C_BYTE_DATA);
-            if (rc < 0)
-                pr_info("[OTP]%s: i2c_write w 0x0A00 fail\n", __func__);
-
-            msleep(10);
-
-            for(i = 0; i < 3; i++)
-            {
-                rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_read(s_ctrl->sensor_i2c_client, 0x0A04 + i, &read_data, MSM_CAMERA_I2C_BYTE_DATA);
-                if (rc < 0)
-                    pr_err("[OTP]%s: i2c_read 0x%x failed\n", __func__, (0x0A04 + i));
-                else
-                {
-                    otp[i] = read_data;
-                    if(read_data)
-                        valid_layer = j;
-                    read_data = 0;
-                }
-            }
-
-            for(i = 0; i < 15; i++)
-            {
-                rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_read(s_ctrl->sensor_i2c_client, (0x0A14 + i), &read_data, MSM_CAMERA_I2C_BYTE_DATA);
-                if (rc < 0)
-                    pr_err("[OTP]%s: i2c_read 0x%x failed\n", __func__, (0x0A14 + i));
-                else
-                {
-                    otp[3+i] = read_data;
-                    if(read_data)
-                        valid_layer = j;
-                    read_data = 0;
-                }
-            }
-
-            if(valid_layer != -1)
-            {
-                pr_info("[OTP]%s: valid_layer:%d \n", __func__,valid_layer);
-                break;
-            }
-        }
-
-  for(i=0; i<5; i++)
-      s_ctrl->sensordata->sensor_info->OTP_INFO[i] = otp[3+i];
-
-  s_ctrl->sensordata->sensor_info->fuse_id[0] = 0;
-  s_ctrl->sensordata->sensor_info->fuse_id[1] = otp[0];
-  s_ctrl->sensordata->sensor_info->fuse_id[2] = otp[1];
-  s_ctrl->sensordata->sensor_info->fuse_id[3] = otp[2];
-
-        
-        pr_info("%s: read OTP for dual cam calibration\n", __func__);
-        imx214_read_otp_memory(otp_mem, cdata, s_ctrl);
-        if (rc<0) {
-            pr_err("%s: imx214_read_otp_memory failed %d\n", __func__, rc);
-            return rc;
-        }
-        
-    }
-
-    if(cdata != NULL)
-    {
-    
-    if (read_otp)
-    {
-        f = msm_fopen (path, O_CREAT|O_RDWR|O_TRUNC, 0666);
-        if (f) {
-            msm_fwrite (f, 0, otp_mem, DUAL_CAL_OTP_SIZE);
-            msm_fclose (f);
-            pr_info ("%s: dump OTP memory successfully\n", __func__);
-        } else {
-            pr_err ("%s: fail to open file to write OTP memory\n", __func__);
-        }
-        read_otp = false;
-    }
+	static int read_otp = true;
+	uint8_t *path= "/data/OTPData.dat";
+	struct file* f;
     
 
-    cdata->cfg.fuse.fuse_id_word1 = 0;
-    cdata->cfg.fuse.fuse_id_word2 = otp[0];
-    cdata->cfg.fuse.fuse_id_word3 = otp[1];
-    cdata->cfg.fuse.fuse_id_word4 = otp[2];
+	if (first) {
+		first = false;
+		for (j = 2; j >= 0; j--) {
+			rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_write(s_ctrl->sensor_i2c_client, 0x0A02, j, MSM_CAMERA_I2C_BYTE_DATA);
+			if (rc < 0)
+				pr_info("[OTP]%s: i2c_write w 0x0A02 fail\n", __func__);
 
-    cdata->af_value.VCM_VENDOR = otp[3];
-    cdata->af_value.VCM_VENDOR_ID_VERSION = otp[7];
-    cdata->af_value.VCM_BIAS = otp[8];
-    cdata->af_value.VCM_OFFSET = otp[9];
-    cdata->af_value.VCM_BOTTOM_MECH_MSB = otp[10];
-    cdata->af_value.VCM_BOTTOM_MECH_LSB = otp[11];
-    cdata->af_value.AF_INF_MSB = otp[12];
-    cdata->af_value.AF_INF_LSB = otp[13];
-    cdata->af_value.AF_MACRO_MSB = otp[14];
-    cdata->af_value.AF_MACRO_LSB = otp[15];
-    cdata->af_value.VCM_TOP_MECH_MSB = otp[16];
-    cdata->af_value.VCM_TOP_MECH_LSB = otp[17];
+			rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_write(s_ctrl->sensor_i2c_client, 0x0A00, 0x01, MSM_CAMERA_I2C_BYTE_DATA);
+			if (rc < 0)
+				pr_info("[OTP]%s: i2c_write w 0x0A00 fail\n", __func__);
 
-    pr_info("%s: OTP Module vendor = 0x%x\n",               __func__,  otp[3]);
-    pr_info("%s: OTP LENS = 0x%x\n",                        __func__,  otp[4]);
-    pr_info("%s: OTP Sensor Version = 0x%x\n",              __func__,  otp[5]);
-    pr_info("%s: OTP Driver IC Vendor & Version = 0x%x\n",  __func__,  otp[6]);
-    pr_info("%s: OTP Actuator vender ID & Version = 0x%x\n",__func__,  otp[7]);
+			msleep(10);
 
-    pr_info("%s: OTP fuse 0 = 0x%x\n", __func__,  cdata->cfg.fuse.fuse_id_word1);
-    pr_info("%s: OTP fuse 1 = 0x%x\n", __func__,  cdata->cfg.fuse.fuse_id_word2);
-    pr_info("%s: OTP fuse 2 = 0x%x\n", __func__,  cdata->cfg.fuse.fuse_id_word3);
-    pr_info("%s: OTP fuse 3 = 0x%x\n", __func__,  cdata->cfg.fuse.fuse_id_word4);
+			for (i = 0; i < 3; i++) {
+				rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_read(s_ctrl->sensor_i2c_client, 0x0A04 + i, &read_data, MSM_CAMERA_I2C_BYTE_DATA);
+				if (rc < 0)
+					pr_err("[OTP]%s: i2c_read 0x%x failed\n", __func__, (0x0A04 + i));
+				else {
+					otp[i] = read_data;
+					if (read_data)
+						valid_layer = j;
+					read_data = 0;
+				}
+			}
 
-    pr_info("%s: OTP BAIS Calibration data = 0x%x\n",           __func__,  cdata->af_value.VCM_BIAS);
-    pr_info("%s: OTP OFFSET Calibration data = 0x%x\n",         __func__,  cdata->af_value.VCM_OFFSET);
-    pr_info("%s: OTP VCM bottom mech. Limit (MSByte) = 0x%x\n", __func__,  cdata->af_value.VCM_BOTTOM_MECH_MSB);
-    pr_info("%s: OTP VCM bottom mech. Limit (LSByte) = 0x%x\n", __func__,  cdata->af_value.VCM_BOTTOM_MECH_LSB);
-    pr_info("%s: OTP Infinity position code (MSByte) = 0x%x\n", __func__,  cdata->af_value.AF_INF_MSB);
-    pr_info("%s: OTP Infinity position code (LSByte) = 0x%x\n", __func__,  cdata->af_value.AF_INF_LSB);
-    pr_info("%s: OTP Macro position code (MSByte) = 0x%x\n",    __func__,  cdata->af_value.AF_MACRO_MSB);
-    pr_info("%s: OTP Macro position code (LSByte) = 0x%x\n",    __func__,  cdata->af_value.AF_MACRO_LSB);
-    pr_info("%s: OTP VCM top mech. Limit (MSByte) = 0x%x\n",    __func__,  cdata->af_value.VCM_TOP_MECH_MSB);
-    pr_info("%s: OTP VCM top mech. Limit (LSByte) = 0x%x\n",    __func__,  cdata->af_value.VCM_TOP_MECH_LSB);
+			for (i = 0; i < 15; i++) {
+				rc = s_ctrl->sensor_i2c_client->i2c_func_tbl->i2c_read(s_ctrl->sensor_i2c_client, (0x0A14 + i), &read_data, MSM_CAMERA_I2C_BYTE_DATA);
+				if (rc < 0)
+					pr_err("[OTP]%s: i2c_read 0x%x failed\n", __func__, (0x0A14 + i));
+				else {
+					otp[3+i] = read_data;
+					if (read_data)
+						valid_layer = j;
+					read_data = 0;
+				}
+			}
 
-    strlcpy(cdata->af_value.ACT_NAME, "lc898212_act", sizeof("lc898212_act"));
-    pr_info("%s: OTP Actuator Name = %s\n",__func__, cdata->af_value.ACT_NAME);
+			if (valid_layer != -1) {
+				pr_info("[OTP]%s: valid_layer:%d \n", __func__,valid_layer);
+				break;
+			}
+		}
+
+		for (i=0; i<5; i++)
+			s_ctrl->sensordata->sensor_info->OTP_INFO[i] = otp[3+i];
+
+		s_ctrl->sensordata->sensor_info->fuse_id[0] = 0;
+		s_ctrl->sensordata->sensor_info->fuse_id[1] = otp[0];
+		s_ctrl->sensordata->sensor_info->fuse_id[2] = otp[1];
+		s_ctrl->sensordata->sensor_info->fuse_id[3] = otp[2];
+
+		pr_info("%s: read OTP for dual cam calibration\n", __func__);
+		imx214_read_otp_memory(otp_mem, cdata, s_ctrl);
+		if (rc<0) {
+			pr_err("%s: imx214_read_otp_memory failed %d\n", __func__, rc);
+			return rc;
+		}
 	}
-	else
-	{
-	    pr_info("%s: OTP Module vendor = 0x%x\n",               __func__,  otp[3]);
-	    pr_info("%s: OTP LENS = 0x%x\n",                        __func__,  otp[4]);
-	    pr_info("%s: OTP Sensor Version = 0x%x\n",              __func__,  otp[5]);
-	    pr_info("%s: OTP Driver IC Vendor & Version = 0x%x\n",  __func__,  otp[6]);
-	    pr_info("%s: OTP Actuator vender ID & Version = 0x%x\n",__func__,  otp[7]);
-	}
-    return rc;
 
+	if (cdata != NULL) {
+
+		if (read_otp) {
+			f = file_open(path, O_CREAT|O_RDWR|O_TRUNC, 0666);
+			if (f) {
+				file_write(f, 0, otp_mem, DUAL_CAL_OTP_SIZE);
+				file_close(f);
+				pr_info ("%s: dump OTP memory successfully\n", __func__);
+			} else {
+				pr_err ("%s: fail to open file to write OTP memory\n", __func__);
+			}
+			read_otp = false;
+		}
+
+		cdata->cfg.fuse.fuse_id_word1 = 0;
+		cdata->cfg.fuse.fuse_id_word2 = otp[0];
+		cdata->cfg.fuse.fuse_id_word3 = otp[1];
+		cdata->cfg.fuse.fuse_id_word4 = otp[2];
+
+		cdata->af_value.VCM_VENDOR = otp[3];
+		cdata->af_value.VCM_VENDOR_ID_VERSION = otp[7];
+		cdata->af_value.VCM_BIAS = otp[8];
+		cdata->af_value.VCM_OFFSET = otp[9];
+		cdata->af_value.VCM_BOTTOM_MECH_MSB = otp[10];
+		cdata->af_value.VCM_BOTTOM_MECH_LSB = otp[11];
+		cdata->af_value.AF_INF_MSB = otp[12];
+		cdata->af_value.AF_INF_LSB = otp[13];
+		cdata->af_value.AF_MACRO_MSB = otp[14];
+		cdata->af_value.AF_MACRO_LSB = otp[15];
+		cdata->af_value.VCM_TOP_MECH_MSB = otp[16];
+		cdata->af_value.VCM_TOP_MECH_LSB = otp[17];
+
+		pr_info("%s: OTP Module vendor = 0x%x\n",               __func__,  otp[3]);
+		pr_info("%s: OTP LENS = 0x%x\n",                        __func__,  otp[4]);
+		pr_info("%s: OTP Sensor Version = 0x%x\n",              __func__,  otp[5]);
+		pr_info("%s: OTP Driver IC Vendor & Version = 0x%x\n",  __func__,  otp[6]);
+		pr_info("%s: OTP Actuator vender ID & Version = 0x%x\n",__func__,  otp[7]);
+
+		pr_info("%s: OTP fuse 0 = 0x%x\n", __func__,  cdata->cfg.fuse.fuse_id_word1);
+		pr_info("%s: OTP fuse 1 = 0x%x\n", __func__,  cdata->cfg.fuse.fuse_id_word2);
+		pr_info("%s: OTP fuse 2 = 0x%x\n", __func__,  cdata->cfg.fuse.fuse_id_word3);
+		pr_info("%s: OTP fuse 3 = 0x%x\n", __func__,  cdata->cfg.fuse.fuse_id_word4);
+
+		pr_info("%s: OTP BAIS Calibration data = 0x%x\n",           __func__,  cdata->af_value.VCM_BIAS);
+		pr_info("%s: OTP OFFSET Calibration data = 0x%x\n",         __func__,  cdata->af_value.VCM_OFFSET);
+		pr_info("%s: OTP VCM bottom mech. Limit (MSByte) = 0x%x\n", __func__,  cdata->af_value.VCM_BOTTOM_MECH_MSB);
+		pr_info("%s: OTP VCM bottom mech. Limit (LSByte) = 0x%x\n", __func__,  cdata->af_value.VCM_BOTTOM_MECH_LSB);
+		pr_info("%s: OTP Infinity position code (MSByte) = 0x%x\n", __func__,  cdata->af_value.AF_INF_MSB);
+		pr_info("%s: OTP Infinity position code (LSByte) = 0x%x\n", __func__,  cdata->af_value.AF_INF_LSB);
+		pr_info("%s: OTP Macro position code (MSByte) = 0x%x\n",    __func__,  cdata->af_value.AF_MACRO_MSB);
+		pr_info("%s: OTP Macro position code (LSByte) = 0x%x\n",    __func__,  cdata->af_value.AF_MACRO_LSB);
+		pr_info("%s: OTP VCM top mech. Limit (MSByte) = 0x%x\n",    __func__,  cdata->af_value.VCM_TOP_MECH_MSB);
+		pr_info("%s: OTP VCM top mech. Limit (LSByte) = 0x%x\n",    __func__,  cdata->af_value.VCM_TOP_MECH_LSB);
+
+		strlcpy(cdata->af_value.ACT_NAME, "lc898212_act", sizeof("lc898212_act"));
+		pr_info("%s: OTP Actuator Name = %s\n",__func__, cdata->af_value.ACT_NAME);
+	} else {
+		pr_info("%s: OTP Module vendor = 0x%x\n",               __func__,  otp[3]);
+		pr_info("%s: OTP LENS = 0x%x\n",                        __func__,  otp[4]);
+		pr_info("%s: OTP Sensor Version = 0x%x\n",              __func__,  otp[5]);
+		pr_info("%s: OTP Driver IC Vendor & Version = 0x%x\n",  __func__,  otp[6]);
+		pr_info("%s: OTP Actuator vender ID & Version = 0x%x\n",__func__,  otp[7]);
+	}
+	return rc;
 }
 
 static int32_t imx214_platform_probe(struct platform_device *pdev)
