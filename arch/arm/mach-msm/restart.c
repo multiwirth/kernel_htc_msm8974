@@ -598,6 +598,7 @@ void msm_restart(char mode, const char *cmd)
 		msm_watchdog_reset();
 #else
 		__raw_writel(0, MSM_MPM2_PSHOLD_BASE);
+#endif
 	}
 
 	mdelay(10000);

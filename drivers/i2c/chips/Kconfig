@@ -27,4 +27,10 @@ config INPUT_CAPELLA_CM3629
 	  Say Y here to enable the CM3629 Short Distance Proximity
 	  Sensor with Ambient Light Sensor.
 
+config CIR_ALWAYS_READY
+        bool "BMA250 CIR Always Ready"
+	default n
+	help
+	  Enable CIR Always Ready
+
 endmenu

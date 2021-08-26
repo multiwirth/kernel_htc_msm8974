@@ -886,8 +886,7 @@ static int cpr_regulator_set_voltage(struct regulator_dev *rdev,
 	} else {
 #ifdef CONFIG_ARCH_MSM8226
 		if (!htc_pvs_adjust) {
-			new_volt = cpr_vreg->pvs_corner_v
-				[cpr_vreg->process][fuse_corner];
+			new_volt = cpr_vreg->pvs_corner_v[fuse_corner];
 		} else {
 			new_volt = cpr_vreg->htc_pvs_corner_v[fuse_corner];
 		}

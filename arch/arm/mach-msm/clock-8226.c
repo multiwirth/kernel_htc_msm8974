@@ -26,6 +26,10 @@
 #include <mach/rpm-smd.h>
 #include <mach/clock-generic.h>
 
+#ifdef CONFIG_HTC_RPM_CMD
+#include "rpm_htc_cmd.h"
+#endif
+
 #include "clock-local2.h"
 #include "clock-pll.h"
 #include "clock-rpm.h"
@@ -3796,3 +3800,15 @@ struct clock_init_data msm8226_clock_init_data __initdata = {
 	.pre_init = msm8226_clock_pre_init,
 	.post_init = msm8226_clock_post_init,
 };
+
+void keep_dig_voltage_low_in_idle(bool on)
+{
+#ifdef CONFIG_HTC_RPM_CMD
+	htc_rpm_cmd_hold_vdd_dig(on);
+#else
+	if (on)
+		vote_vdd_level(&vdd_dig, VDD_DIG_LOW);
+	else
+		unvote_vdd_level(&vdd_dig, VDD_DIG_LOW);
+#endif
+}

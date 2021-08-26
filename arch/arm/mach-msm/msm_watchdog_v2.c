@@ -28,6 +28,13 @@
 #include <mach/scm.h>
 #include <mach/msm_memory_dump.h>
 
+#ifdef CONFIG_HTC_DEBUG_FOOTPRINT
+#include <mach/msm_iomap.h>
+#include <mach/htc_footprint.h>
+
+#define MPM_SCLK_COUNT_VAL	(0x0)
+#define MPM_SLEEP_CLK_BASE	(MSM_MPM_SLEEPTICK_BASE + MPM_SCLK_COUNT_VAL)
+
 #ifdef CONFIG_ARCH_MSM8226
 extern bool htc_pvs_adjust;
 extern u32  htc_pvs_adjust_seconds;
@@ -51,6 +58,7 @@ uint32_t mpm_get_timetick(void)
 	mb();
 	return tick;
 }
+#endif
 #endif
 
 #define MODULE_NAME "msm_watchdog"
@@ -98,6 +106,7 @@ struct msm_watchdog_data {
  */
 static int enable = 1;
 module_param(enable, int, 0);
+static void __iomem *msm_wdt_base;
 
 #ifdef CONFIG_ARCH_MSM8226
 void msm_watchdog_reset(void)
