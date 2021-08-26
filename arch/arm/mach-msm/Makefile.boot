@@ -80,9 +80,9 @@ else ifeq ($(CONFIG_MACH_MEC_DWG)$(CONFIG_MACH_MEC_UL)$(CONFIG_MACH_MEC_TL)$(CON
 	dtb-$(CONFIG_ARCH_MSM8974)	+= msm8974pro-ab-pm8941-mecdug.dtb
 	dtb-$(CONFIG_ARCH_MSM8974)	+= msm8974pro-ab-pm8941-mecwhl.dtb
 else ifeq ($(CONFIG_MACH_A5), y)
-	htc_dtb-$(CONFIG_ARCH_MSM8226)	+= msm8926-a5ul.dtb
-	htc_dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-a5dwg.dtb
-	htc_dtb-$(CONFIG_ARCH_MSM8226)	+= msm8926-a5dwgl.dtb
+	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8926-a5ul.dtb
+	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8226-a5dwg.dtb
+	dtb-$(CONFIG_ARCH_MSM8226)	+= msm8926-a5dwgl.dtb
 else
 	dtb-$(CONFIG_ARCH_MSM8974)	+= msm8974-v1-cdp.dtb
 	dtb-$(CONFIG_ARCH_MSM8974)	+= msm8974-v1-fluid.dtb
