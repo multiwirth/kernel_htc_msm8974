@@ -479,8 +479,10 @@
 		qcom,rpull-up-kohm = <100>;
 		qcom,vref-batt-therm = <1800000>;
 
+/* disable it due to conflit with htc batterydata
 		/include/ "batterydata-palladium.dtsi"
 		/include/ "batterydata-mtp-3000mah.dtsi"
+*/
 	};
 };
 
