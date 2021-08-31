@@ -2056,7 +2056,7 @@ static int cpr_mem_acc_init(struct platform_device *pdev,
 	return 0;
 }
 
-#if CONFIG_ARCH_MSM8226
+#ifdef CONFIG_ARCH_MSM8226
 static int __devinit htc_init_corner(struct platform_device *pdev,
 					struct cpr_regulator *cpr_vreg)
 {
