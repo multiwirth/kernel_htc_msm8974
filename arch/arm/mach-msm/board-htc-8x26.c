@@ -61,18 +61,14 @@
 #endif
 #include <mach/cable_detect.h>
 #include <mach/devices_cmdline.h>
-#ifdef CONFIG_HTC_BATT_8960
+#ifdef CONFIG_HTC_BATT_8974
 #include "linux/mfd/pm8xxx/pm8921-charger.h"
 #include "linux/mfd/pm8xxx/pm8921-bms.h"
 #include "linux/mfd/pm8xxx/batt-alarm.h"
-#include "mach/htc_battery_8960.h"
+#include "mach/htc_battery_8974.h"
 #include "mach/htc_battery_cell.h"
 #include <linux/qpnp/qpnp-charger.h>
 #include <linux/qpnp/qpnp-bms.h>
-#endif
-
-#ifdef CONFIG_HTC_DEBUG_FOOTPRINT
-#include <mach/htc_mnemosyne.h>
 #endif
 
 #ifdef CONFIG_BT
@@ -81,102 +77,6 @@
 
 #ifdef CONFIG_HTC_BUILD_EDIAG
 #include <linux/android_ediagpmem.h>
-#endif
-
-#ifdef CONFIG_LCD_KCAL
-#include <mach/kcal.h>
-#include <linux/module.h>
-#include "../../../drivers/video/msm/mdss/mdss_fb.h"
-extern int update_preset_lcdc_lut(void);
-
-extern int g_kcal_r;
-extern int g_kcal_g;
-extern int g_kcal_b;
-
-extern int g_kcal_min;
-
-int kcal_set_values(int kcal_r, int kcal_g, int kcal_b)
-{
-
-	if (kcal_r > 255 || kcal_r < 0)
-		kcal_r = kcal_r < 0 ? 0 : kcal_r;
-		kcal_r = kcal_r > 255 ? 255 : kcal_r;
-	if (kcal_g > 255 || kcal_g < 0)
-		kcal_g = kcal_g < 0 ? 0 : kcal_g;
-		kcal_g = kcal_g > 255 ? 255 : kcal_g;
-	if (kcal_b > 255 || kcal_b < 0)
-		kcal_b = kcal_b < 0 ? 0 : kcal_b;
-		kcal_b = kcal_b > 255 ? 255 : kcal_b;
-
-	g_kcal_r = kcal_r < g_kcal_min ? g_kcal_min : kcal_r;
-	g_kcal_g = kcal_g < g_kcal_min ? g_kcal_min : kcal_g;
-	g_kcal_b = kcal_b < g_kcal_min ? g_kcal_min : kcal_b;
-
-	if (kcal_r < g_kcal_min || kcal_g < g_kcal_min || kcal_b < g_kcal_min)
-		update_preset_lcdc_lut();
-
-	return 0;
-}
-
-static int kcal_get_values(int *kcal_r, int *kcal_g, int *kcal_b)
-{
-	*kcal_r = g_kcal_r;
-	*kcal_g = g_kcal_g;
-	*kcal_b = g_kcal_b;
-	return 0;
-}
-
-int kcal_set_min(int kcal_min)
-{
-	g_kcal_min = kcal_min;
-
-	if (g_kcal_min > 255)
-		g_kcal_min = 255;
-
-	if (g_kcal_min < 0)
-		g_kcal_min = 0;
-
-	if (g_kcal_min > g_kcal_r || g_kcal_min > g_kcal_g || g_kcal_min > g_kcal_b) {
-		g_kcal_r = g_kcal_r < g_kcal_min ? g_kcal_min : g_kcal_r;
-		g_kcal_g = g_kcal_g < g_kcal_min ? g_kcal_min : g_kcal_g;
-		g_kcal_b = g_kcal_b < g_kcal_min ? g_kcal_min : g_kcal_b;
-		update_preset_lcdc_lut();
-	}
-
-	return 0;
-}
-
-static int kcal_get_min(int *kcal_min)
-{
-	*kcal_min = g_kcal_min;
-	return 0;
-}
-
-static int kcal_refresh_values(void)
-{
-	return update_preset_lcdc_lut();
-}
-
-static struct kcal_platform_data kcal_pdata = {
-	.set_values = kcal_set_values,
-	.get_values = kcal_get_values,
-	.refresh_display = kcal_refresh_values,
-	.set_min = kcal_set_min,
-	.get_min = kcal_get_min
-};
-
-static struct platform_device kcal_platrom_device = {
-	.name = "kcal_ctrl",
-	.dev = {
-		.platform_data = &kcal_pdata,
-	}
-};
-
-void __init add_lcd_kcal_devices(void)
-{
-	pr_info (" LCD_KCAL_DEBUG : %s \n", __func__);
-	platform_device_register(&kcal_platrom_device);
-};
 #endif
 
 #define HTC_8226_PERSISTENT_RAM_PHYS 0x05B00000
@@ -376,7 +276,7 @@ static struct cable_detect_platform_data cable_detect_pdata = {
 	.mhl_1v2_power = mhl_sii9234_1v2_power,
 	.usb_dpdn_switch        = m7_usb_dpdn_switch,
 #endif
-#ifdef CONFIG_HTC_BATT_8960
+#ifdef CONFIG_HTC_BATT_8974
 	.is_pwr_src_plugged_in	= pm8941_is_pwr_src_plugged_in,
 #endif
 	.vbus_debounce_retry = 1,
@@ -491,7 +391,7 @@ static void msm8226_add_usb_devices(void)
 	platform_device_register(&android_usb_device);
 }
 
-#if defined(CONFIG_HTC_BATT_8960)
+#if defined(CONFIG_HTC_BATT_8974)
 static int critical_alarm_voltage_mv[] = {3000, 3200, 3400};
 
 static struct htc_battery_platform_data htc_battery_pdev_data = {
@@ -515,7 +415,9 @@ static struct htc_battery_platform_data htc_battery_pdev_data = {
 	.icharger.set_pwrsrc_and_charger_enable =
 						pm8941_set_pwrsrc_and_charger_enable,
 	.icharger.set_limit_charge_enable = pm8941_limit_charge_enable,
+	.icharger.set_limit_input_current = pm8941_limit_input_current,
 	.icharger.set_chg_iusbmax = pm8941_set_chg_iusbmax,
+	.icharger.set_chg_curr_settled = pm8941_set_chg_curr_settled,
 	.icharger.set_chg_vin_min = pm8941_set_chg_vin_min,
 	.icharger.is_ovp = pm8941_is_charger_ovp,
 	.icharger.is_batt_temp_fault_disable_chg =
@@ -529,19 +431,26 @@ static struct htc_battery_platform_data htc_battery_pdev_data = {
 	.icharger.is_battery_full_eoc_stop = pm8941_is_batt_full_eoc_stop,
 	.icharger.get_charge_type = pm8941_get_charge_type,
 	.icharger.get_chg_usb_iusbmax = pm8941_get_chg_usb_iusbmax,
+	.icharger.get_chg_curr_settled = pm8941_get_chg_curr_settled,
 	.icharger.get_chg_vinmin = pm8941_get_chg_vinmin,
 	.icharger.get_input_voltage_regulation =
 						pm8941_get_input_voltage_regulation,
+	.icharger.store_battery_charger_data = pm8941_store_battery_charger_data_emmc,
+	.icharger.set_ftm_charge_enable_type = pm8941_set_ftm_charge_enable_type,
 
 	.igauge.name = "pm8x26",
 	.igauge.get_battery_voltage = pm8941_get_batt_voltage,
 	.igauge.get_battery_current = pm8941_bms_get_batt_current,
 	.igauge.get_battery_temperature = pm8941_get_batt_temperature,
 	.igauge.get_battery_id = pm8941_get_batt_id,
+	.igauge.get_battery_id_mv = pm8941_get_batt_id_mv,
 	.igauge.get_battery_soc = pm8941_bms_get_batt_soc,
 	.igauge.get_battery_cc = pm8941_bms_get_batt_cc,
-	.igauge.store_battery_data = pm8941_bms_store_battery_data_emmc,
+	.igauge.store_battery_gauge_data = pm8941_bms_store_battery_gauge_data_emmc,
 	.igauge.store_battery_ui_soc = pm8941_bms_store_battery_ui_soc,
+	.igauge.enter_qb_mode = pm8941_bms_enter_qb_mode,
+	.igauge.exit_qb_mode = pm8941_bms_exit_qb_mode,
+	.igauge.qb_mode_pwr_consumption_check = pm8941_qb_mode_pwr_consumption_check,
 	.igauge.get_battery_ui_soc = pm8941_bms_get_battery_ui_soc,
 	.igauge.is_battery_temp_fault = pm8941_is_batt_temperature_fault,
 	.igauge.is_battery_full = pm8941_is_batt_full,
@@ -592,7 +501,7 @@ void __init htc_8226_add_drivers(void)
 	tsens_tm_init_driver();
 	msm_thermal_device_init();
 	msm8x26_cable_detect_register();
-#if defined(CONFIG_HTC_BATT_8960)
+#if defined(CONFIG_HTC_BATT_8974)
 	htc_batt_cell_register();
 	msm8x26_add_batt_devices();
 #endif
@@ -614,9 +523,6 @@ void __init htc_8226_init_early(void)
 {
         persistent_ram_early_init(&htc_8226_persistent_ram);
 
-#ifdef CONFIG_HTC_DEBUG_FOOTPRINT
-        mnemosyne_early_init((unsigned int)HTC_DEBUG_FOOTPRINT_PHYS, (unsigned int)HTC_DEBUG_FOOTPRINT_BASE);
-#endif
 }
 
 void __init htc_8226_init(void)
@@ -642,14 +548,8 @@ void __init htc_8226_init(void)
 	platform_device_register(&android_pmem_ediag2_device);
 	platform_device_register(&android_pmem_ediag3_device);
 #endif
-#ifdef CONFIG_PERFLOCK
-	platform_device_register(&msm8226_device_perf_lock);
-#endif
 #ifdef CONFIG_HTC_POWER_DEBUG
 	htc_monitor_init();
-#endif
-#ifdef CONFIG_LCD_KCAL
-	add_lcd_kcal_devices();
 #endif
 }
 
